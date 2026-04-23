@@ -7,6 +7,22 @@ a.navbar-brand {
   word-break: break-all;
 }
 
+a.navbar-brand.app-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
+  max-width: 520px;
+  font-weight: 600;
+  line-height: 1.1;
+  word-break: normal;
+}
+
+.app-brand-logo {
+  width: 110px;
+  height: auto;
+  flex: 0 0 auto;
+}
+
 a {
   color: #0077cc;
 }

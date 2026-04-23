@@ -5,11 +5,139 @@
 }
 
 <div class="text-center">
-    <h1 class="display-4">Привет, @ViewData["UserName"]</h1>
+    <h1 class="display-4">Привет, @Model.UserName</h1>
 </div>
 <div>
-    <p>Ответ на запрос @ViewData["DiadocRequest"]:</p>
+    <p>Текущий логин: <strong>@Model.UserLogin</strong></p>
+</div>
+
+<div class="mt-4">
+    <h2>Отправить документ на подпись</h2>
+
+    <form method="post" enctype="multipart/form-data" asp-page-handler="SendForSignature">
+        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+        <div class="mb-3">
+            <label asp-for="Input.OrganizationBoxId" class="form-label">Организация</label>
+            <select asp-for="Input.OrganizationBoxId" asp-items="Model.AvailableOrganizations" class="form-select" onchange="document.getElementById('refreshOrganizationButton').click();">
+                <option value="">Выберите организацию</option>
+            </select>
+            <span asp-validation-for="Input.OrganizationBoxId" class="text-danger"></span>
+        </div>
+
+        <div class="mb-3">
+            <label asp-for="Input.BoxId" class="form-label">BoxId</label>
+            <input asp-for="Input.BoxId" class="form-control" readonly />
+            <div class="form-text">Подставляется автоматически из выбранной организации.</div>
+            <span asp-validation-for="Input.BoxId" class="text-danger"></span>
+        </div>
+
+        <div class="mb-3">
+            <label asp-for="Input.FromDepartmentId" class="form-label">Подразделение отправителя</label>
+            <select asp-for="Input.FromDepartmentId" asp-items="Model.AvailableDepartments" class="form-select"></select>
+            <span asp-validation-for="Input.FromDepartmentId" class="text-danger"></span>
+        </div>
+
+        <div class="mb-3">
+            <label asp-for="Input.InternalRecipientLoginOrUserId" class="form-label">Получатель сообщения: логин или UserId</label>
+            <input asp-for="Input.InternalRecipientLoginOrUserId" class="form-control" />
+            <span asp-validation-for="Input.InternalRecipientLoginOrUserId" class="text-danger"></span>
+        </div>
+
+        <div class="mb-3">
+            <label asp-for="Input.InternalRecipientDepartmentId" class="form-label">Подразделение получателя</label>
+            <select asp-for="Input.InternalRecipientDepartmentId" asp-items="Model.AvailableDepartments" class="form-select">
+                <option value="">Выберите подразделение получателя</option>
+            </select>
+            <div class="form-text">Если у пользователя нет доступа к `GetEmployees`, укажите получателя по `UserId` и выберите его подразделение вручную.</div>
+            <span asp-validation-for="Input.InternalRecipientDepartmentId" class="text-danger"></span>
+        </div>
+
+        <div class="mb-3">
+            <label asp-for="Input.SignatureRecipientLoginOrUserId" class="form-label">Подписант: логин или UserId</label>
+            <input asp-for="Input.SignatureRecipientLoginOrUserId" class="form-control" />
+            <div class="form-text">Если доступ к `GetEmployees` ограничен, для подписанта нужно указывать именно `UserId`. Если оставить пустым, будет использован тот же идентификатор, что и у получателя сообщения.</div>
+            <span asp-validation-for="Input.SignatureRecipientLoginOrUserId" class="text-danger"></span>
+        </div>
+
+        <div class="mb-3">
+            <label asp-for="Input.Comment" class="form-label">Комментарий</label>
+            <input asp-for="Input.Comment" class="form-control" />
+            <span asp-validation-for="Input.Comment" class="text-danger"></span>
+        </div>
+
+        <div class="mb-3">
+            <label asp-for="Input.Document" class="form-label">Файл документа</label>
+            <input asp-for="Input.Document" type="file" class="form-control" />
+            <span asp-validation-for="Input.Document" class="text-danger"></span>
+        </div>
+
+        <button type="submit" class="btn btn-primary">Отправить на подпись</button>
+        <button type="submit" asp-page-handler="RefreshOrganization" id="refreshOrganizationButton" hidden aria-hidden="true" tabindex="-1">Обновить организацию</button>
+    </form>
+</div>
+
+@if (!string.IsNullOrWhiteSpace(Model.OperationResult))
+{
+    <div class="mt-4">
+        <p>Результат отправки:</p>
+        <pre style="max-height: 500px"><code>@Model.OperationResult</code></pre>
+    </div>
+}
+
+@if (!string.IsNullOrWhiteSpace(Model.RouteDiagnostics))
+{
+    <div class="mt-4">
+        <p>Диагностика маршрута:</p>
+        <pre style="max-height: 500px"><code>@Model.RouteDiagnostics</code></pre>
+    </div>
+}
+
+<div class="mt-4">
+    <h2>Скачать подписанный документ</h2>
+
+    <form method="post">
+        <div class="mb-3">
+            <label asp-for="DownloadInput.BoxId" class="form-label">BoxId</label>
+            <input asp-for="DownloadInput.BoxId" class="form-control" />
+            <span asp-validation-for="DownloadInput.BoxId" class="text-danger"></span>
+        </div>
+
+        <div class="mb-3">
+            <label asp-for="DownloadInput.MessageId" class="form-label">MessageId</label>
+            <input asp-for="DownloadInput.MessageId" class="form-control" />
+            <span asp-validation-for="DownloadInput.MessageId" class="text-danger"></span>
+        </div>
+
+        <div class="mb-3">
+            <label asp-for="DownloadInput.EntityId" class="form-label">EntityId документа</label>
+            <input asp-for="DownloadInput.EntityId" class="form-control" />
+            <span asp-validation-for="DownloadInput.EntityId" class="text-danger"></span>
+        </div>
+
+        <div class="d-flex flex-wrap gap-2">
+            <button type="submit" asp-page-handler="DownloadOriginal" class="btn btn-outline-primary">
+                Документ в исходном формате
+            </button>
+            <button type="submit" asp-page-handler="DownloadSignedPdf" class="btn btn-outline-primary">
+                Документ с внутренней подписью
+            </button>
+            <button type="submit" asp-page-handler="DownloadDocflow" class="btn btn-outline-secondary">
+                Полный документооборот
+            </button>
+            <button type="submit" asp-page-handler="DownloadSignature" class="btn btn-outline-dark">
+                Скачать sgn
+            </button>
+        </div>
+        <div class="form-text mt-2">
+            Каждая кнопка вызывает отдельный сценарий скачивания: исходный файл, PDF-представление, полный документооборот и отдельная подпись.
+        </div>
+    </form>
+</div>
+
+<div class="mt-4">
+    <p>Ответ на запрос @Model.DiadocRequest:</p>
     <pre style="max-height: 500px"><code>
-@ViewData["DiadocResponse"]
+@Model.DiadocResponse
     </code></pre>
 </div>

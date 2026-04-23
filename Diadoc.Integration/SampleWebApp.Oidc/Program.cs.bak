@@ -6,12 +6,11 @@ using Microsoft.IdentityModel.Protocols.OpenIdConnect;
 
 var builder = WebApplication.CreateBuilder(args);
 
-var clientId = "test";
-var clientSecret = "test";
+var clientId = "ci_SMS-IT";
+var clientSecret = "3240955a-e94f-18de-07b5-393008d35a4a";
 
 // Add services to the container.
 builder.Services.AddRazorPages();
-builder.Services.AddHttpClient();
 builder.Services.AddAuthentication(options =>
     {
         options.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
