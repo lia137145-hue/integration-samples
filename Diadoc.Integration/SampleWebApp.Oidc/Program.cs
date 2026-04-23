@@ -6,6 +6,9 @@ using Microsoft.IdentityModel.Protocols.OpenIdConnect;
 
 var builder = WebApplication.CreateBuilder(args);
 
+var clientId = "test";
+var clientSecret = "test";
+
 // Add services to the container.
 builder.Services.AddRazorPages();
 builder.Services.AddAuthentication(options =>
@@ -17,22 +20,41 @@ builder.Services.AddAuthentication(options =>
     .AddOpenIdConnect(options =>
         {
             options.Authority = "https://identity.kontur.ru";
-            options.ClientId = builder.Configuration["Oidc:ClientId"];
-            options.ClientSecret = builder.Configuration["Oidc:ClientSecret"];
+			options.ClientId = clientId;
+			options.ClientSecret = clientSecret;
+            //options.ClientId = builder.Configuration["Oidc:ClientId"];
+            //options.ClientSecret = builder.Configuration["Oidc:ClientSecret"];
+			options.ResponseType = OpenIdConnectResponseType.Code;
+			options.UsePkce = true;
+			options.SaveTokens = true;
+
+			options.Scope.Clear();
+			options.Scope.Add("openid");
+			options.Scope.Add("profile");
+			options.Scope.Add("email");
+			options.Scope.Add("offline_access");
             options.Scope.Add("Diadoc.PublicAPI.Staging");
+			
+			options.CallbackPath = "/signin-oidc";
+			options.SignedOutCallbackPath = "/signout-callback-oidc";
 
-            //options.SignedOutRedirectUri = "/Home/Goodbye";
 
-            // "code id_token" indicates Hybrid flow
-            options.ResponseType = OpenIdConnectResponseType.CodeIdToken;
-            options.SaveTokens = true;
+            //options.SignInScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+			// options.CorrelationCookie.HttpOnly = true;
+			// options.CorrelationCookie.IsEssential = true;
+			// options.CorrelationCookie.SameSite = SameSiteMode.Lax;
+			// options.CorrelationCookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
 
-            // see https://github.com/aspnet/Security/issues/1376
-            options.SignInScheme = CookieAuthenticationDefaults.AuthenticationScheme;
-            options.NonceCookie.SecurePolicy = CookieSecurePolicy.Always;
+			// options.NonceCookie.HttpOnly = true;
+			// options.NonceCookie.IsEssential = true;
+			// options.NonceCookie.SameSite = SameSiteMode.Lax;
+			// options.NonceCookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
+            //options.NonceCookie.SecurePolicy = CookieSecurePolicy.Always;
         }
     );
-var diadocApi = new DiadocApi(builder.Configuration["Oidc:ClientId"], "https://diadoc-api-test.kontur.ru", new WinApiCrypt());
+//var diadocApi = new DiadocApi(builder.Configuration["Oidc:ClientId"], "https://diadoc-api-test.kontur.ru", new WinApiCrypt());
+//var diadocApi = new DiadocApi(clientId, "https://diadoc-api-test.kontur.ru", new WinApiCrypt());
+var diadocApi = new DiadocApi(clientId, "https://diadoc-api-staging.kontur.ru", new WinApiCrypt());
 diadocApi.UseOidc();
 builder.Services.AddSingleton<IDiadocApi>(diadocApi);
 
@@ -46,11 +68,12 @@ if (!app.Environment.IsDevelopment())
     app.UseHsts();
 }
 
-app.UseHttpsRedirection();
+//app.UseHttpsRedirection();
 app.UseStaticFiles();
 
 app.UseRouting();
 
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapRazorPages();
